@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 
 
-class ToDoListViewController: UITableViewController {
+class ToDoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
@@ -19,6 +19,7 @@ class ToDoListViewController: UITableViewController {
     var selectedCategory : Category? {
         didSet{
             loadItems()
+            
         }
     }
 
@@ -33,13 +34,13 @@ class ToDoListViewController: UITableViewController {
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             
             cell.textLabel?.text = item.title
-            
             cell.accessoryType = item.done ? .checkmark : .none
+            
         } else {
             cell.textLabel?.text = "No Items Added"
         }
@@ -54,9 +55,6 @@ class ToDoListViewController: UITableViewController {
             do {
             try realm.write {
                     item.done =  !item.done
-                
-                //delete data from realm
-                    //realm.delete(item)
                 }
             } catch {
                 print("Error saving done status \(error)")
@@ -115,9 +113,26 @@ class ToDoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    //MARK: - Delete cell
+    
+    override func updateModel(at indexPath: IndexPath) {
+        
+        if let itemForDeletion = self.todoItems?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    //delete data from realm
+                    self.realm.delete(itemForDeletion)
+                }
+            } catch {
+                print("Error deleting \(error)")
+            }
+        }
+        
+    }
+    
 }
 
-// MARK: - Search Bar Methods
+    // MARK: - Search Bar Methods
 
 extension ToDoListViewController : UISearchBarDelegate {
 
